@@ -5,33 +5,19 @@ def main():
     base_url = 'https://www.nhc.noaa.gov/gis/'
     
     zip_list = get_zip_list(url_path)
-    
-        
-    tmp = 0
-        
+            
     for i in zip_list:
         url = base_url + i
         r = get_zip(url)
         
-            
         filename = str(tmp) + '.zip'
-        # filename = re.find(r'/.*\.zip', i)
-        # print(filename)
-        
-        # str(tmp) + '.zip'    
-            
-        # open(str(i), 'wb').write(r.content)
-        # print('wrote ' + i)
-        # tmp += 1
-        
-        
         
         with zipfile.ZipFile(io.BytesIO(r.content)) as myfile:
-            # zipfile.ZipFile.extract(myfile)
             files = myfile.namelist()
             for i in files:
                 if (re.match(r'.*\.shp', i) or re.match(r'.*\.shx', i) or re.match(r'.*\.dbf', i)) and not re.match(r'.*\.xml', i):
                     print(i)
+                    myfile.extract(i)
                 
 def get_zip_list(url):
     # request url
