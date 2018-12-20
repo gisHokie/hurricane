@@ -9,15 +9,13 @@ def main():
     for i in zip_list:
         url = base_url + i
         r = get_zip(url)
-        
-        filename = str(tmp) + '.zip'
-        
+                
         with zipfile.ZipFile(io.BytesIO(r.content)) as myfile:
             files = myfile.namelist()
             for i in files:
                 if (re.match(r'.*\.shp', i) or re.match(r'.*\.shx', i) or re.match(r'.*\.dbf', i)) and not re.match(r'.*\.xml', i):
                     print(i)
-                    myfile.extract(i)
+                    print(myfile.read(i))
                 
 def get_zip_list(url):
     # request url
