@@ -1,12 +1,15 @@
 import requests, re, zipfile, io
 
 def main():
+    #init vars
     url_path = 'https://www.nhc.noaa.gov/gis/archive_forecast_results.php?id=all4&year=2018'
     base_url = 'https://www.nhc.noaa.gov/gis/'
-        
+    to_find = re.compile(r'a href\=".*\.zip"')
+      
     # get list of links to zip files
-    zip_list = get_zip_list(url_path)
+    zip_list = get_zip_list(url_path, to_find)
     
+    # decide what to strip
     strip_list = ['a href=', '\"']
     cleaned_links = []
     
@@ -15,32 +18,27 @@ def main():
         tmp = clean_zip_link(i, strip_list)
         cleaned_links.append(tmp)
            
-    # request data from zip urls
+    # request data from zip urls and write files
     for i in cleaned_links:
         url = base_url + i
         r = get_http_request(url)
     
-    # print files: .shp, .shx, .dbf; not .xml
-    with zipfile.ZipFile(io.BytesIO(r.content)) as myfile:
-        files = myfile.namelist()
-        for i in files:
-            if (re.match(r'.*\.shp', i) or re.match(r'.*\.shx', i) or re.match(r'.*\.dbf', i)) and not re.match(r'.*\.xml', i):
-                print(i)
-                print(myfile.read(i))
-  
-# parses list of links to zip files in html page  
-def get_zip_list(url):
+        myfile = zipfile.ZipFile(io.BytesIO(r.content))
+        write_files_from_zip(myfile)
+            
+# parses list of links to zip files in html page
+# to_find is a regex matching what you're searching for  
+def get_zip_list(url, to_find):
     # request url
     r = get_http_request(url)
-    
+
     # get html
     html = r.text
-    
+
     # find zips
-    matches = re.findall(r'a href\=".*\.zip"', html)
-    zip_list = []
+    matches = re.findall(to_find, html)
     
-    return zip_list
+    return matches
 
 # strips unwanted strings from link
 def clean_zip_link(zip, strip_list):
@@ -48,9 +46,13 @@ def clean_zip_link(zip, strip_list):
         zip = zip.strip(i)
     return zip
 
-# todo
-def write_files(zip):
-    
+# stores shape files found in zip
+def write_files_from_zip(zip):
+    files = zip.namelist()
+    for i in files:
+        if (re.match(r'.*\.shp', i) or re.match(r'.*\.shx', i) or re.match(r'.*\.dbf', i)) and not re.match(r'.*\.xml', i):
+            print(i)
+            print(zip.read(i))
     return 0
    
 # makes http get request to url
